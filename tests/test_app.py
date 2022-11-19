@@ -3,6 +3,7 @@ import json
 import pytest
 
 from app import app
+from tests.conftest import trains_data
 
 # You are welcome to use a Flask client fixture or test the running instance, as below
 BASE_URL = 'http://127.0.0.1:5000/'
@@ -18,13 +19,15 @@ def test_startup():
 
 
 @pytest.mark.parametrize("train", [
-    {'id': 'TOMO', 'schedule': [180, 640, 1440]},
-    {'id': 'FOMO', 'schedule': [440, 640]},
-    {'id': '1', 'schedule': [100, 220, 300]}
+    {'id': 'A', 'schedule': [180, 640, 1440]},
+    {'id': 'C', 'schedule': [440, 640]},
+    {'id': 'E', 'schedule': [100, 220, 300]},
+    {'id': '1', 'schedule': [100, 220, 2359]},
+    {'id': '2', 'schedule': [0]},
+    {'id': '3', 'schedule': []},
 ])
 def test_add(train):
     """Asserts that schedules are added and returned as expected."""
-
     r = client.post(f'trains', json=train)
 
     assert r.status_code == 200
@@ -33,9 +36,50 @@ def test_add(train):
     assert response_json == train['schedule']
 
 
-def test_next():
+@pytest.mark.parametrize("train_data", trains_data)
+def test_get(seed_test_data, train_data):
+    """Asserts that the schedule is returned for the expected train."""
+    train, schedule = train_data
+
+    r = client.get(f'trains/{train}')
+
+    assert r.status_code == 200
+    assert json.loads(r.data) == schedule
+
+
+def test_next(seed_test_data):
     """ Implement a test for the /trains/next functionality"""
-    raise NotImplementedError
+    r = client.get('trains/next')
+
+    assert r.status_code == 200
 
 
-# Implement any other necessary tests
+@pytest.mark.parametrize("train_id", [None, 1, ""])
+def test_post_train_id_required_as_string(train_id):
+    """Asserts an error is returned if train id is not provided."""
+    json_data = {'schedule': [100, 220, 2359]}
+    if train_id is not None:
+        json_data['id'] = train_id
+
+    r = client.post(f'trains', json=json_data)
+
+    assert r.status_code == 422
+    assert json.loads(r.data) == [{'id': 'train id is required and must be a string.'}]
+
+
+@pytest.mark.parametrize("schedule", [None, [None], ["asdf"], [9999], [123, 9999], [234, "asdf"]])
+def test_post_schedule_required(schedule):
+    """Asserts an error is returned if train schedule is not provided as a list of ints between 0 and 2359.
+
+        Note: An empty list is allowed.
+    """
+    json_data = {'id': 'TEST'}
+    if schedule is not None:
+        json_data['schedule'] = schedule
+
+    r = client.post(f'trains', json=json_data)
+
+    assert r.status_code == 422
+    assert json.loads(r.data) == [
+        {'schedule': 'schedule is required and must be a list of integers between 0 and 2359.'}
+    ]
