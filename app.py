@@ -26,8 +26,9 @@ def add_train():
 
     schedule = train_data['schedule']
     schedule.sort()
+    schedule_set = set(schedule)  # store as a set to avoid duplicate times
 
-    db.set(key=train_data['id'], val=train_data['schedule'])
+    db.set(key=train_data['id'], val=schedule_set)
 
     return jsonify(train_data['schedule']), 200
 
@@ -88,6 +89,9 @@ def validate_train_data(train_data):
             all(t <= MAX_TIME for t in train_data['schedule'])
     ):
         errors.append({"schedule": "schedule is required and must be a list of integers between 0 and 2359."})
+
+    if train_data.get('id') in db.keys():
+        errors.append({'id': 'train id already exists.'})
 
     return errors
 
