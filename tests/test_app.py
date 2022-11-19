@@ -54,8 +54,8 @@ def test_next(seed_test_data):
     assert r.status_code == 200
 
 
-@pytest.mark.parametrize("train_id", [None, 1, ""])
-def test_post_train_id_required_as_string(train_id):
+@pytest.mark.parametrize("train_id", [None, 1, "", "floccinaucinihilipilification"])
+def test_post_invalid_train_id(train_id):
     """Asserts an error is returned if train id is not provided."""
     json_data = {'schedule': [100, 220, 2359]}
     if train_id is not None:
@@ -64,7 +64,7 @@ def test_post_train_id_required_as_string(train_id):
     r = client.post(f'trains', json=json_data)
 
     assert r.status_code == 422
-    assert json.loads(r.data) == [{'id': 'train id is required and must be a string.'}]
+    assert json.loads(r.data) == [{'id': 'train id is required and must be a string between 1 and 8 characters.'}]
 
 
 @pytest.mark.parametrize("schedule", [None, [None], ["asdf"], [9999], [123, 9999], [234, "asdf"]])

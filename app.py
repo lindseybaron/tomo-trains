@@ -73,8 +73,12 @@ def find_first_duplicate_in_sorted_list(values):
 def validate_train_data(train_data):
     errors = []
 
-    if not train_data.get('id') or not isinstance(train_data.get('id'), str):
-        errors.append({"id": "train id is required and must be a string."})
+    if not (
+            train_data.get('id') and
+            isinstance(train_data.get('id'), str) and
+            len(train_data['id']) <= 8
+    ):
+        errors.append({"id": "train id is required and must be a string between 1 and 8 characters."})
 
     if not (
             train_data.get('schedule') is not None and
