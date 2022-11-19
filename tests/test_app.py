@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 import pytest
 
@@ -24,7 +25,7 @@ def test_startup():
     {'id': 'E', 'schedule': [100, 220, 300]},
     {'id': '1', 'schedule': [100, 220, 2359]},
     {'id': '2', 'schedule': [0]},
-    {'id': 'accident', 'schedule': []},  # Names up to 8 characters and empty schedule lists should be allowed.
+    {'id': 'TOMO', 'schedule': []},  # Names up to 4 characters and empty schedule lists should be allowed.
 ])
 def test_add(train):
     """Asserts that schedules are added and returned as expected."""
@@ -64,7 +65,7 @@ def test_post_invalid_train_id(train_id):
     r = client.post(f'trains', json=json_data)
 
     assert r.status_code == 422
-    assert json.loads(r.data) == [{'id': 'train id is required and must be a string between 1 and 8 characters.'}]
+    assert json.loads(r.data) == [{'id': 'train id is required and must be a string from 1 to 4 characters.'}]
 
 
 @pytest.mark.parametrize("schedule", [None, [None], ["asdf"], [9999], [123, 9999], [234, "asdf"]])
@@ -83,3 +84,29 @@ def test_post_schedule_required(schedule):
     assert json.loads(r.data) == [
         {'schedule': 'schedule is required and must be a list of integers between 0 and 2359.'}
     ]
+
+
+def test_add_duplicate_train_id():
+    """Asserts that schedules are added and returned as expected."""
+    train = {"id": "DUPE", "schedule": [1234, 2345]}
+
+    # Add it once, then try to add it again.
+    client.post(f'trains', json=train)
+    r = client.post(f'trains', json=train)
+
+    assert r.status_code == 422
+    assert json.loads(r.data) == [{'id': 'train id already exists.'}]
+
+
+# add train with duplicate times
+def test_add_train_with_duplicate_times():
+    """Asserts that schedules do not return duplicate times."""
+    expected_train = {"id": "DUPE", "schedule": [1234, 2345]}
+    train = deepcopy(expected_train)
+    train['schedule'].append(1234)
+
+    r = client.post(f'trains', json=train)
+
+    assert r.status_code == 200
+    assert json.loads(r.data) == expected_train['schedule']
+

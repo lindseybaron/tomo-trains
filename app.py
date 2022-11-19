@@ -24,11 +24,10 @@ def add_train():
     if errors:
         return jsonify(errors), 422
 
-    schedule = train_data['schedule']
-    schedule.sort()
-    schedule_set = set(schedule)  # store as a set to avoid duplicate times
+    train_data['schedule'].sort()
+    train_data['schedule'] = list(dict.fromkeys(train_data['schedule']))
 
-    db.set(key=train_data['id'], val=schedule_set)
+    db.set(key=train_data['id'], val=train_data['schedule'])
 
     return jsonify(train_data['schedule']), 200
 
@@ -77,9 +76,9 @@ def validate_train_data(train_data):
     if not (
             train_data.get('id') and
             isinstance(train_data.get('id'), str) and
-            len(train_data['id']) <= 8
+            len(train_data['id']) <= 4
     ):
-        errors.append({"id": "train id is required and must be a string between 1 and 8 characters."})
+        errors.append({"id": "train id is required and must be a string from 1 to 4 characters."})
 
     if not (
             train_data.get('schedule') is not None and
