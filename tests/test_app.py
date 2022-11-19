@@ -24,7 +24,7 @@ def test_startup():
     {'id': 'E', 'schedule': [100, 220, 300]},
     {'id': '1', 'schedule': [100, 220, 2359]},
     {'id': '2', 'schedule': [0]},
-    {'id': '3', 'schedule': []},
+    {'id': 'accident', 'schedule': []},  # Names up to 8 characters and empty schedule lists should be allowed.
 ])
 def test_add(train):
     """Asserts that schedules are added and returned as expected."""
@@ -54,7 +54,7 @@ def test_next(seed_test_data):
     assert r.status_code == 200
 
 
-@pytest.mark.parametrize("train_id", [None, 1, "", "floccinaucinihilipilification"])
+@pytest.mark.parametrize("train_id", [None, 1, "", "floccinaucinihilipilification", "ABRASIONS"])
 def test_post_invalid_train_id(train_id):
     """Asserts an error is returned if train id is not provided."""
     json_data = {'schedule': [100, 220, 2359]}
