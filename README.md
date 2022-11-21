@@ -1,3 +1,6 @@
+## Notes
+App can be run as described [here](#Template)
+
 ## Context
 Tomo is building a service for the local transit authority.
 
