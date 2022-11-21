@@ -1,6 +1,8 @@
+import re
+
 from datetime import datetime
 
-from flask import Flask, Response, jsonify, request
+from flask import Flask, jsonify, request
 
 from db import Database
 
@@ -11,12 +13,12 @@ MAX_TIME = 2359
 MIN_TIME = 0
 
 
-@app.route('/')
+@app.route("/")
 def init():
     return "OK"
 
 
-@app.route('/trains', methods=['POST'])
+@app.route("/trains", methods=["POST"])
 def add_train():
     """Add a new train line."""
     train_data = request.json
@@ -24,15 +26,15 @@ def add_train():
     if errors:
         return jsonify(errors), 422
 
-    train_data['schedule'].sort()
-    train_data['schedule'] = list(dict.fromkeys(train_data['schedule']))
+    train_data["schedule"].sort()
+    train_data["schedule"] = list(dict.fromkeys(train_data["schedule"]))
 
-    db.set(key=train_data['id'], val=train_data['schedule'])
+    db.set(key=train_data["id"], val=train_data["schedule"])
 
-    return jsonify(train_data['schedule']), 200
+    return jsonify(train_data["schedule"]), 200
 
 
-@app.route('/trains/<string:train_id>')
+@app.route("/trains/<string:train_id>")
 def get_schedule(train_id):
     """Return the schedule for a given train line."""
     train = db.get(key=train_id)
@@ -40,7 +42,7 @@ def get_schedule(train_id):
     return jsonify(train), 200
 
 
-@app.route('/trains/next', methods=['GET'])
+@app.route("/trains/next", methods=["GET"])
 def get_next():
     """Return the next time multiple trains are in the station."""
     now = datetime.now()
@@ -77,26 +79,27 @@ def validate_train_data(train_data):
     errors = []
 
     if not (
-            train_data.get('id') and
-            isinstance(train_data.get('id'), str) and
-            len(train_data['id']) <= 4
+            train_data.get("id") and
+            isinstance(train_data.get("id"), str) and
+            len(train_data["id"]) <= 4 and
+            re.match("^[a-zA-Z0-9]+$", train_data["id"])
     ):
         errors.append({"id": "train id is required and must be a string from 1 to 4 characters."})
 
     if not (
-            train_data.get('schedule') is not None and
-            isinstance(train_data.get('schedule'), list) and
-            all(isinstance(s, int) for s in train_data['schedule']) and
-            all(t >= MIN_TIME for t in train_data['schedule']) and
-            all(t <= MAX_TIME for t in train_data['schedule'])
+            train_data.get("schedule") is not None and
+            isinstance(train_data.get("schedule"), list) and
+            all(isinstance(s, int) for s in train_data["schedule"]) and
+            all(t >= MIN_TIME for t in train_data["schedule"]) and
+            all(t <= MAX_TIME for t in train_data["schedule"])
     ):
         errors.append({"schedule": "schedule is required and must be a list of integers between 0 and 2359."})
 
-    if train_data.get('id') in db.keys():
-        errors.append({'id': 'train id already exists.'})
+    if train_data.get("id") in db.keys():
+        errors.append({"id": "train id already exists."})
 
     return errors
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run()

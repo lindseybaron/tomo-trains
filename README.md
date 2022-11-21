@@ -1,5 +1,17 @@
 ## Notes
-App can be run as described [here](#Template)
+App can be run and tested as described [here](#Template)
+
+Schedule times are accepted as an int in HHMM format, without leading 0's.
+
+Currently, there's no way to update an existing train's schedule, because I included validation to prevent duplicate trains from being created, and the directions say to use only the existing methods in the Database class. I would have liked to add an update method that would allow for this, which would also leverage Database().set(), but with modified validation (assert the train exists, don't error if it does).
+
+For scalability purposes, I would probably use a sqlite instance and leverage sqlalchemy to easily manage train and schedule objects in separate tables, so additional information could be added, i.e. details about the train such as size, details about each train 'time', i.e. arrival, departure, bay, etc.
+
+Schemas would be nice to more cleanly handle request validation and response formatting.
+
+As a user, I would have found it helpful to have the API return the train id along with the schedules/times, but the acceptance requirements specifically says to return the schedule. That's what it's currently doing, but should product decide to make that change, it would be pretty easy to do.
+
+I have some thoughts/questions about the thread safety bit of the directions, but I'd prefer to discuss that during the interview.
 
 ## Context
 Tomo is building a service for the local transit authority.
@@ -16,7 +28,7 @@ Write a small API web service that provides endpoints to track and manage the tr
 
 The web service should provide a means for clients to post a schedule for a new train line that runs through this station and verify its correctness:
 
-- A request to `/trains` should accept a train identifier (a string that contains up to four alphanumeric characters, e.g. ‘EWR0’, ‘ALP5’, ‘TOMO’, etc) and a list of times when the train arrives in the station
+- A request to `/trains` should accept a train identifier (a string that contains up to four alphanumeric characters, e.g. ‘EWR0’, ‘ALP5’, ‘TOMO’, etc.) and a list of times when the train arrives in the station
 - A request to `/trains/<train_id>` should provide the schedule for the specified train identifier
 - A request to `/trains/next` should return the time two or more trains will be in the station.    
      
@@ -96,4 +108,4 @@ You may define the API contract for this service however you wish, including the
 You may submit in one of two ways:
 
 - ZIP the source code (and any supplemental documentation) and return it as an email attachment.  
-- Commit and push the code to an accessible GitHub/GitLab/etc repository
+- Commit and push the code to an accessible GitHub/GitLab/etc. repository
