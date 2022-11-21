@@ -1,5 +1,6 @@
 import json
 from copy import deepcopy
+from datetime import datetime
 
 import pytest
 
@@ -48,11 +49,16 @@ def test_get(seed_test_data, train_data):
     assert json.loads(r.data) == schedule
 
 
+@pytest.mark.freeze_time('2022-11-20T12:34:00')
 def test_next(seed_test_data):
     """ Implement a test for the /trains/next functionality"""
+    now = datetime.now()
+    now_number = int(f"{now.hour}{now.minute}")
     r = client.get('trains/next')
 
     assert r.status_code == 200
+    assert json.loads(r.data) == 1245
+    assert json.loads(r.data) >= now_number
 
 
 @pytest.mark.parametrize("train_id", [None, 1, "", "floccinaucinihilipilification", "ABRASIONS"])
@@ -98,10 +104,11 @@ def test_add_duplicate_train_id():
     assert json.loads(r.data) == [{'id': 'train id already exists.'}]
 
 
-# add train with duplicate times
 def test_add_train_with_duplicate_times():
     """Asserts that schedules do not return duplicate times."""
-    expected_train = {"id": "DUPE", "schedule": [1234, 2345]}
+    expected_train = {"id": "EPUD", "schedule": [1234, 2345]}
+
+    # Post data with duplicate train time.
     train = deepcopy(expected_train)
     train['schedule'].append(1234)
 
