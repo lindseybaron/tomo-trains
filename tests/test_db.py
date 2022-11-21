@@ -7,7 +7,8 @@ from db import Database
 fake = Faker()
 
 
-def add_items(db, start_value, num_values):
+def add_trains(db, start_value, num_values):
+    """Add new trains."""
     for i in range(start_value, start_value + num_values):
         db.set(key=str(i), val=i)
 
@@ -34,11 +35,11 @@ def test_keys():
 
 def test_multi_thread_set():
     db = Database()
-    target_num = 1000000
+    target = 1000000
 
-    threads = list()
-    for i in range(0, target_num, 1000):
-        thread = Thread(target=add_items, args=(db, i, 1000))
+    threads = []
+    for i in range(0, target, 1000):
+        thread = Thread(target=add_trains, args=(db, i, 1000))
         threads.append(thread)
 
     for thread in threads:
@@ -46,4 +47,4 @@ def test_multi_thread_set():
     for thread in threads:
         thread.join()
 
-    assert len(db.keys()) == target_num
+    assert len(db.keys()) == target

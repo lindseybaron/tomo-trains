@@ -61,21 +61,24 @@ def get_next():
     times_after_now = list(filter(lambda t: t >= now_number, all_times))
     if all_times:
         first_duplicate_time = find_first_duplicate_in_sorted_list(times_after_now)
-        if not first_duplicate_time and len(all_times):
+        if not first_duplicate_time and all_times:
             first_duplicate_time = find_first_duplicate_in_sorted_list(all_times[:all_times.index(times_after_now[0])])
 
     return jsonify(first_duplicate_time), 200
 
 
 def find_first_duplicate_in_sorted_list(values):
+    """Find the first occurrence of a duplicate number in a sorted list."""
     value_set = set()
     for value in values:
         if value in value_set:
             return value
         value_set.add(value)
+    return None
 
 
 def validate_train_data(train_data):
+    """Validate the request body for a new train."""
     errors = []
 
     if not (

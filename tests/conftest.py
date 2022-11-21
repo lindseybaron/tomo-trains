@@ -16,7 +16,7 @@ trains_data = [
 
 @pytest.fixture
 def seed_test_data():
-
+    """Create test data."""
     for train_data in trains_data:
         train, schedule = train_data
         db.set(train, schedule)
