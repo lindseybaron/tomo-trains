@@ -9,7 +9,6 @@ from tests.conftest import trains_data
 
 # You are welcome to use a Flask client fixture or test the running instance, as below
 BASE_URL = 'http://127.0.0.1:5000/'
-
 client = app.test_client()
 
 
@@ -18,6 +17,47 @@ def test_startup():
     r = client.get("/")
     assert r.status_code == 200
     assert r.data.decode('utf-8') == "OK"
+
+
+@pytest.mark.freeze_time('2022-11-20T12:34:00')
+def test_next_no_next():
+    """Assert /trains/next returns empty list if there's no time in the next 24 hours with multiple trains."""
+    r = client.get('trains/next')
+
+    assert r.status_code == 200
+    assert json.loads(r.data) == []
+
+
+@pytest.mark.freeze_time('2022-11-20T23:59:00')
+def test_next_tomorrow(seed_test_data):
+    """Assert /trains/next returns next time multiple trains in station not until next day."""
+    r = client.get('trains/next')
+
+    assert r.status_code == 200
+    assert json.loads(r.data) == 201
+
+
+@pytest.mark.freeze_time('2022-11-20T12:34:00')
+def test_next(seed_test_data):
+    """Assert /trains/next returns the next time multiple trains are in the station."""
+    now = datetime.now()
+    now_number = int(f"{now.hour}{now.minute}")
+    r = client.get('trains/next')
+
+    assert r.status_code == 200
+    assert json.loads(r.data) == 1245
+    assert json.loads(r.data) >= now_number
+
+
+@pytest.mark.parametrize("train_data", trains_data)
+def test_get(seed_test_data, train_data):
+    """Asserts that the schedule is returned for the expected train."""
+    train, schedule = train_data
+
+    r = client.get(f'trains/{train}')
+
+    assert r.status_code == 200
+    assert json.loads(r.data) == schedule
 
 
 @pytest.mark.parametrize("train", [
@@ -38,31 +78,8 @@ def test_add(train):
     assert response_json == train['schedule']
 
 
-@pytest.mark.parametrize("train_data", trains_data)
-def test_get(seed_test_data, train_data):
-    """Asserts that the schedule is returned for the expected train."""
-    train, schedule = train_data
-
-    r = client.get(f'trains/{train}')
-
-    assert r.status_code == 200
-    assert json.loads(r.data) == schedule
-
-
-@pytest.mark.freeze_time('2022-11-20T12:34:00')
-def test_next(seed_test_data):
-    """ Implement a test for the /trains/next functionality"""
-    now = datetime.now()
-    now_number = int(f"{now.hour}{now.minute}")
-    r = client.get('trains/next')
-
-    assert r.status_code == 200
-    assert json.loads(r.data) == 1245
-    assert json.loads(r.data) >= now_number
-
-
 @pytest.mark.parametrize("train_id", [None, 1, "", "floccinaucinihilipilification", "ABRASIONS"])
-def test_post_invalid_train_id(train_id):
+def test_add_invalid_train_id(train_id):
     """Asserts an error is returned if train id is not provided."""
     json_data = {'schedule': [100, 220, 2359]}
     if train_id is not None:
@@ -75,7 +92,7 @@ def test_post_invalid_train_id(train_id):
 
 
 @pytest.mark.parametrize("schedule", [None, [None], ["asdf"], [9999], [123, 9999], [234, "asdf"]])
-def test_post_schedule_required(schedule):
+def test_add_schedule_required(schedule):
     """Asserts an error is returned if train schedule is not provided as a list of ints between 0 and 2359.
 
         Note: An empty list is allowed.
@@ -116,4 +133,3 @@ def test_add_train_with_duplicate_times():
 
     assert r.status_code == 200
     assert json.loads(r.data) == expected_train['schedule']
-
